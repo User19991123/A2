@@ -144,7 +144,7 @@ class TMTree:
             curr_pos = 0
             for t in self._subtrees:
                 width = t.data_size / self.data_size
-                r = (rect[], width, rect[3])
+                r = (rect[0], width, rect[3])
                 t.update_rectangles(r)
 
     def get_rectangles(self) -> List[Tuple[Tuple[int, int, int, int],
@@ -155,7 +155,13 @@ class TMTree:
         to fill it with.
         """
         # TODO: (Task 2) Complete the body of this method.
-
+        if self._subtrees or not self._expanded:
+            return [(self.rect, self._colour)]
+        else:
+            result = []
+            for t in self._subtrees:
+                result += t.get_rectangles()
+            return result
 
     def get_tree_at_position(self, pos: Tuple[int, int]) -> Optional[TMTree]:
         """Return the leaf in the displayed-tree rooted at this tree whose
@@ -166,6 +172,8 @@ class TMTree:
         tree represented by the rectangle that is closer to the origin.
         """
         # TODO: (Task 3) Complete the body of this method
+        rects = self.get_rectangles()
+
 
     def update_data_sizes(self) -> int:
         """Update the data_size for this tree and its subtrees, based on the
@@ -253,11 +261,12 @@ class FileSystemTree(TMTree):
         name = path.split('/')[-1]
         subtrees = []
         data_size = 0
-        if os.path.isdir(self):
+        if os.path.isdir(path):
             for f in os.listdir(path):
                 fst = FileSystemTree(path + '/' + f)
                 subtrees.append(fst)
-                data_size += fst.data_size
+                #fst._parent_tree = self
+                #data_size += fst.data_size
         else:
             data_size = os.path.getsize(path)
         TMTree.__init__(self, name, subtrees, data_size)
