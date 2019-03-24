@@ -154,7 +154,7 @@ class TMTree:
                     curr_pos2 += s_width2
                     s_width = math.floor((t.data_size / self.data_size) * width)
                     if curr_pos2 == width:
-                        r = (x + curr_pos + s_width, y, width - curr_pos,
+                        r = (x + curr_pos + s_width, y, width - curr_pos,\
                              height)
                     else:
                         r = (x + curr_pos + s_width, y, s_width, height)
@@ -163,10 +163,10 @@ class TMTree:
                 elif width < height:
                     s_height2 = (t.data_size / self.data_size) * height
                     curr_pos2 += s_height2
-                    s_height = math.floor((t.data_size / self.data_size) * \
+                    s_height = math.floor((t.data_size / self.data_size) *\
                                           height)
                     if curr_pos2 == height:
-                        r = (x, y - curr_pos - s_height, width, height - \
+                        r = (x, y - curr_pos - s_height, width, height -\
                              curr_pos)
                     else:
                         r = (x, y - curr_pos - s_height, width, s_height)
@@ -182,13 +182,18 @@ class TMTree:
         to fill it with.
         """
         # TODO: (Task 2) Complete the body of this method.
-        if self._subtrees or not self._expanded:
-            return [(self.rect, self._colour)]
+
+    def help_get_tree(self, selected_tree: Tuple[int, int, int, int]) -> TMTree:
+        """return the TMtree with its attribute, rect, which is the same as the
+         selected_tree """
+        if not self._subtrees or not self._expanded:
+            if self.rect == selected_tree:
+                return self
         else:
-            result = []
-            for t in self._subtrees:
-                result += t.get_rectangles()
-            return result
+            for tree in self._subtrees:
+                wanted_tree = tree.help_get_tree(selected_tree)
+                if wanted_tree is not None:
+                    return wanted_tree
 
     def get_tree_at_position(self, pos: Tuple[int, int]) -> Optional[TMTree]:
         """Return the leaf in the displayed-tree rooted at this tree whose
@@ -199,7 +204,35 @@ class TMTree:
         tree represented by the rectangle that is closer to the origin.
         """
         # TODO: (Task 3) Complete the body of this method
-        rects = self.get_rectangles()
+        tri_lst = self.get_rectangles()
+        if pos[0] > self.rect[2] or pos[1] > self.rect[3]:
+            return None
+        tree_wanted = []
+        x_y_wanted = []
+        real_wanted_tree = []
+        index = 0
+        for triangle in tri_lst:
+            width_l = triangle[0][0]
+            width_r = triangle[0][0] + triangle[0][2]
+            height_u = triangle[0][1]
+            height_l = triangle[0][1] - triangle[0][3]
+            if width_l <= pos[0] <= width_r and height_u >= pos[1] >= height_l:
+                tree_wanted.append(triangle[0])
+                x_y_wanted.append(width_l * width_l + height_u * height_u)
+
+        while index < len(x_y_wanted):
+            if x_y_wanted[index] == min(x_y_wanted):
+                real_wanted_tree.append(tree_wanted[index])
+            index += 1
+
+        selected_tree = real_wanted_tree[0]
+
+        return self.help_get_tree(selected_tree)
+
+
+
+
+
 
 
     def update_data_sizes(self) -> int:
@@ -292,8 +325,7 @@ class FileSystemTree(TMTree):
             for f in os.listdir(path):
                 fst = FileSystemTree(path + '/' + f)
                 subtrees.append(fst)
-                #fst._parent_tree = self
-                #data_size += fst.data_size
+                data_size += fst.data_size
         else:
             data_size = os.path.getsize(path)
         TMTree.__init__(self, name, subtrees, data_size)
