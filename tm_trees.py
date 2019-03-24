@@ -138,13 +138,40 @@ class TMTree:
         # Programming tip: use "tuple unpacking assignment" to easily extract
         # elements of a rectangle, as follows.
         # x, y, width, height = rect
+        x = rect[0]
+        y = rect[1]
+        width = rect[2]
+        height = rect[3]
+
         if not self._subtrees or not self._expanded:
             self.rect = rect
         else:
             curr_pos = 0
+            curr_pos2 = 0
             for t in self._subtrees:
-                width = t.data_size / self.data_size
-                r = (rect[], width, rect[3])
+                if width >= height:
+                    s_width2 = (t.data_size / self.data_size) * width
+                    curr_pos2 += s_width2
+                    s_width = math.floor((t.data_size / self.data_size) * width)
+                    if curr_pos2 == width:
+                        r = (x + curr_pos + s_width, y, width - curr_pos,\
+                             height)
+                    else:
+                        r = (x + curr_pos + s_width, y, s_width, height)
+                    curr_pos += s_width
+
+                elif width < height:
+                    s_height2 = (t.data_size / self.data_size) * height
+                    curr_pos2 += s_height2
+                    s_height = math.floor((t.data_size / self.data_size) *\
+                                          height)
+                    if curr_pos2 == height:
+                        r = (x, y - curr_pos - s_height, width, height -\
+                             curr_pos)
+                    else:
+                        r = (x, y - curr_pos - s_height, width, s_height)
+                    curr_pos += s_height
+
                 t.update_rectangles(r)
 
     def get_rectangles(self) -> List[Tuple[Tuple[int, int, int, int],
@@ -155,7 +182,6 @@ class TMTree:
         to fill it with.
         """
         # TODO: (Task 2) Complete the body of this method.
-
 
     def get_tree_at_position(self, pos: Tuple[int, int]) -> Optional[TMTree]:
         """Return the leaf in the displayed-tree rooted at this tree whose
@@ -253,7 +279,7 @@ class FileSystemTree(TMTree):
         name = path.split('/')[-1]
         subtrees = []
         data_size = 0
-        if os.path.isdir(self):
+        if os.path.isdir(path):
             for f in os.listdir(path):
                 fst = FileSystemTree(path + '/' + f)
                 subtrees.append(fst)
