@@ -250,6 +250,7 @@ class TMTree:
         # TODO: (Task 4) Complete the body of this method
         if self._subtrees:
             self.data_size = math.ceil(self.data_size * factor)
+            self._parent_tree.update_data_sizes()
 
     # TODO: (Task 5) Write the methods expand, expand_all, collapse, and
     # TODO: collapse_all, and add the displayed-tree functionality to the
