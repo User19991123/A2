@@ -200,8 +200,8 @@ class TMTree:
         # TODO: (Task 3) Complete the body of this method
         if not self._subtrees or not self._expanded:
             r = self.rect
-            if pos[0] in range(r[0], r[3] + 1) and pos[1] in range(r[1],
-                                                                   r[2] + 1):
+            if pos[0] in range(r[0], r[0] + r[2] + 1) \
+                    and pos[1] in range(r[1], r[1] + r[3] + 1):
                 return self
             return None
         else:
@@ -225,6 +225,8 @@ class TMTree:
             self.data_size = 0
             for t in self._subtrees:
                 self.data_size += t.data_size
+            if self._parent_tree is not None:
+                self._parent_tree.update_data_sizes()
         return self.data_size
 
     def move(self, destination: TMTree) -> None:
@@ -235,6 +237,7 @@ class TMTree:
         if not self._subtrees and destination._subtrees:
             self._parent_tree = destination
             destination._subtrees.append(self)
+            destination.update_data_sizes()
 
     def change_size(self, factor: float) -> None:
         """Change the value of this tree's data_size attribute by <factor>.
