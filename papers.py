@@ -100,6 +100,8 @@ class PaperTree(TMTree):
     """
 
     # TODO: Add the type contracts for your new attributes here
+    _doi: str
+    _authors: str
 
     def __init__(self, name: str, subtrees: List[TMTree], authors: str = '',
                  doi: str = '', citations: int = 0, by_year: bool = True,
@@ -119,20 +121,22 @@ class PaperTree(TMTree):
         """
         # TODO: Complete this initializer. Your implementation must not
         # TODO: duplicate anything done in the superclass initializer.
-        TMTree.__init__(self, name, subtrees, citations)
         self._doi = doi
         self._authors = authors
-        self.data_size = citations
 
-        # if all_papers:
-        #     self._dict = _load_papers_to_dict(by_year)
-        # else:
-        #     self._dict = self._parent_tree._dict[self._name]
-        # self._subtrees = _build_tree_from_dict(self._dict)
+        TMTree.__init__(self, name, subtrees, citations)
 
         if all_papers:
             paper_dict = _load_papers_to_dict(by_year)
             self._subtrees = _build_tree_from_dict(paper_dict)
+
+        if not self._subtrees:
+            self.data_size = citations
+        else:
+            self.data_size = 0
+            for t in self._subtrees:
+                self.data_size += t.data_size
+                t._parent_tree = self
 
     def get_separator(self) -> str:
         """Return the file separator for this OS.
@@ -190,16 +194,6 @@ def _category_helper(dictionary: Dict, category: List[str],
     """ Load the information of one line (split into a list, and the category
     column extracted as a separate parameter) into a given dictionary.
     Index represents the depth in the dictionary.
-    >>> d = {}
-    >>> _category_helper(d, ['a','b','c'], [1, 2, 3, 4, 5], 0)
-    {'a': {'b': {'c': {'authors': 1, 'title': 2, 'url': 4, \
-'citations': 5}}}}
-    >>> _category_helper(d, ['a', 'e', 'f'], [5, 4, 3, 2, 1], 0)
-    >>> d['a']['e']['f']['authors']
-    5
-    >>> d['a']['b']['c']['title']
-    2
-    >>> d
     """
     if category[index] not in dictionary:
         dictionary[category[index]] = {}
