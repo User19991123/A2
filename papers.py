@@ -76,8 +76,6 @@ class PaperTree(TMTree):
         Name of the author(s)
     _doi:
         Digital Object Identifier of the paper the object represents
-    _dict:
-        Dictionary representation of this tree
 
     === Inherited Attributes ===
     rect:
@@ -124,6 +122,7 @@ class PaperTree(TMTree):
         TMTree.__init__(self, name, subtrees, citations)
         self._doi = doi
         self._authors = authors
+        self.data_size = citations
 
         # if all_papers:
         #     self._dict = _load_papers_to_dict(by_year)
@@ -135,6 +134,20 @@ class PaperTree(TMTree):
             paper_dict = _load_papers_to_dict(by_year)
             self._subtrees = _build_tree_from_dict(paper_dict)
 
+    def get_separator(self) -> str:
+        """Return the file separator for this OS.
+        """
+        return '\\'
+
+    def get_suffix(self) -> str:
+        """Return the final descriptor of this tree.
+        """
+        if len(self._subtrees) == 0:
+            return ' (paper)'
+        elif self._parent_tree is None:
+            return ' (root)'
+        else:
+            return ' (category)'
 
 
 def _load_papers_to_dict(by_year: bool = True) -> Dict:
@@ -143,8 +156,11 @@ def _load_papers_to_dict(by_year: bool = True) -> Dict:
     If <by_year>, then use years as the roots of the subtrees of the root of
     the whole tree. Otherwise, ignore years and use categories only.
     >>> d = _load_papers_to_dict()
-    >>> d['1973']['FLP']['other']['language agnostic approaches']['citations']
+    >>> d['1973']['FLP']['other']['language agnostic approaches']\
+['Separation of Introductory Programming and Language Instruction']\
+['citations']
     6
+    >>> d
     """
     # TODO: Implement this helper, or remove it if you do not plan to use it
     res = {}
@@ -176,14 +192,14 @@ def _category_helper(dictionary: Dict, category: List[str],
     Index represents the depth in the dictionary.
     >>> d = {}
     >>> _category_helper(d, ['a','b','c'], [1, 2, 3, 4, 5], 0)
-    >>> d
-    {'a': {'b': {'c': {'authors': 1, 'title': 2, 'year': 3, 'url': 4, \
+    {'a': {'b': {'c': {'authors': 1, 'title': 2, 'url': 4, \
 'citations': 5}}}}
     >>> _category_helper(d, ['a', 'e', 'f'], [5, 4, 3, 2, 1], 0)
     >>> d['a']['e']['f']['authors']
     5
     >>> d['a']['b']['c']['title']
     2
+    >>> d
     """
     if category[index] not in dictionary:
         dictionary[category[index]] = {}
@@ -191,21 +207,30 @@ def _category_helper(dictionary: Dict, category: List[str],
         _category_helper(dictionary[category[index]],
                          category[index + 1:], args, index)
     else:
-        dictionary[category[index]]['authors'] = args[0]
-        dictionary[category[index]]['title'] = args[1]
+        paper_info = dict()
+        paper_info['authors'] = args[0]
         # dictionary[category[index]]['year'] = args[2]
-        dictionary[category[index]]['url'] = args[3]
-        dictionary[category[index]]['citations'] = int(args[4])
+        paper_info['url'] = args[3]
+        paper_info['citations'] = int(args[4])
+        dictionary[category[index]][args[1]] = paper_info
 
 
 def _build_tree_from_dict(nested_dict: Dict) -> List[PaperTree]:
     """Return a list of trees from the nested dictionary <nested_dict>.
+    >>> d = _load_papers_to_dict()
+    >>> t_lst = _build_tree_from_dict(d)
     """
     # TODO: Implement this helper, or remove it if you do not plan to use it
     res = []
     for key in nested_dict:
-        sub_dict = PaperTree(key, [], )
-
+        this = nested_dict[key]
+        if 'citations' not in this:
+            sub_trees = _build_tree_from_dict(this)
+            res.append(PaperTree(key, sub_trees))
+        else:
+            res.append(PaperTree(key, [], this['authors'], this['url'],
+                                 this['citations']))
+    return res
 
 
 if __name__ == '__main__':
